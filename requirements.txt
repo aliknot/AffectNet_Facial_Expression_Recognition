@@ -4,3 +4,4 @@ numpy
 streamlit
 keras-hub
 tensorflow
+mtcnn
