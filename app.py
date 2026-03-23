@@ -2,43 +2,64 @@ import streamlit as st
 from inference import predict_emotion
 from PIL import Image
 
-# Set up the page layout
-st.set_page_config(page_title="Facial Expression Recognition", page_icon="🎭")
-
-st.title("🎭 Facial Expression Recognition")
-st.write(
-    "Upload a photo to predict the emotion. The app will automatically detect and crop the face."
+# Set up the page layout (added 'centered' layout for a tighter, mobile-friendly look)
+st.set_page_config(
+    page_title="Facial Expression Recognition", page_icon="🎭", layout="centered"
 )
 
-# Create a file uploader
-uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+# --- Header Section ---
+st.title("🎭 Facial Expression Recognition")
+st.markdown(
+    "Upload a photo or take a picture to predict the emotion. The model will automatically detect and isolate the face."
+)
+st.divider()
 
+# --- Sidebar ---
+# Moving settings to the sidebar keeps the main UI clean
+with st.sidebar:
+    st.header("⚙️ Settings")
+    input_method = st.radio("Choose Input Method:", ("Upload Image", "Use Webcam"))
+
+# --- Main Input Area ---
+uploaded_file = None
+
+if input_method == "Upload Image":
+    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+else:
+    uploaded_file = st.camera_input("Take a picture")
+
+# --- Processing & Results ---
 if uploaded_file is not None:
-    # Display the uploaded image
+    # Display the input image centrally
     image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Image", width=300)
+    # use_container_width makes it responsive to the screen size
+    st.image(image, caption="Input Image", use_container_width=True)
 
-    # Add a button to trigger the prediction
-    # Add a button to trigger the prediction
-    if st.button("Predict Emotion"):
+    st.write("")  # Add a little vertical breathing room
+
+    # A primary button stands out visually
+    if st.button("Predict Emotion", type="primary", use_container_width=True):
         with st.spinner("Detecting face and analyzing..."):
             try:
-                # Unpack all THREE return values
+                # Unpack the exact three variables you requested
                 emotion, confidence, cropped_img = predict_emotion(uploaded_file)
 
-                # Create two columns for a clean layout
-                col1, col2 = st.columns(2)
+                st.divider()
+                st.subheader("Analysis Results")
+
+                # Create a 3-column layout for a modern dashboard look
+                col1, col2, col3 = st.columns(3)
 
                 with col1:
-                    # Display the text results in the left column
-                    st.success(f"**Predicted Emotion:** {emotion}")
-                    st.info(f"**Confidence:** {confidence:.2%}")
+                    # st.metric creates beautiful, large-number data callouts
+                    st.metric(label="Predicted Emotion", value=emotion)
 
                 with col2:
-                    # Display the cropped face in the right column
-                    st.image(
-                        cropped_img, caption="Detected Face (Model Input)", width=150
-                    )
+                    st.metric(label="Confidence", value=f"{confidence:.2%}")
+
+                with col3:
+                    # Show the cropped face aligned with the data
+                    st.image(cropped_img, caption="Detected Face", width=120)
 
             except RuntimeError as re:
                 st.error(f"System Error: {re}")
