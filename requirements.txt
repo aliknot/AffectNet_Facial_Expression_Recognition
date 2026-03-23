@@ -3,3 +3,4 @@ Pillow
 numpy
 streamlit
 keras-hub
+tensorflow
